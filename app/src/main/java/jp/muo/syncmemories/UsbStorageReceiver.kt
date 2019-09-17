@@ -14,7 +14,6 @@ class UsbStorageReceiver : BroadcastReceiver() {
             return
         }
         Toast.makeText(context, "USB Storage Connected: ", Toast.LENGTH_SHORT).show()
-        val intent = Intent(context, PicturesSyncService::class.java)
-        JobIntentService.enqueueWork(context, PicturesSyncService::class.java, 1330, intent)
+        PicturesSyncService.invoke(context)
     }
 }
