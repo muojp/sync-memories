@@ -1,25 +1,8 @@
 package jp.muo.syncmemories
 
-import android.Manifest
-import android.app.Activity
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Environment
-import android.util.Log
-import android.widget.TextView
-import android.widget.Toast
-import kotlinx.android.synthetic.main.activity_main.*
-import permissions.dispatcher.NeedsPermission
-import permissions.dispatcher.RuntimePermissions
-import java.lang.StringBuilder
-import androidx.documentfile.provider.DocumentFile
-import androidx.core.app.ComponentActivity
-import androidx.core.app.ComponentActivity.ExtraData
-import androidx.core.content.ContextCompat.getSystemService
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
-import android.net.Uri
-
+import androidx.appcompat.app.AppCompatActivity
 
 
 class MainActivity : AppCompatActivity() {

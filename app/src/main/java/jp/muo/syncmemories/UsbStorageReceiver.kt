@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
-import androidx.core.app.JobIntentService
 
 class UsbStorageReceiver : BroadcastReceiver() {
     val TARGET_USB_INTENT = "android.hardware.usb.action.USB_DEVICE_ATTACHED"

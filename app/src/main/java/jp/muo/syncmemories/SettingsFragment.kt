@@ -6,14 +6,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
 import permissions.dispatcher.NeedsPermission
 import permissions.dispatcher.RuntimePermissions
 
