@@ -95,6 +95,9 @@ class PicturesSyncService : JobIntentService() {
 
     private fun acquireRootDirs() {
         val srcRoot = prefs.getString("srcRoot", "")!!
+        if (srcRoot == "") {
+            return
+        }
         val fileRef = DocumentFile.fromTreeUri(applicationContext, Uri.parse(srcRoot))
         fileRef?.subdirectory("DCIM")?.let {
             // find DSC-series subdirectories
