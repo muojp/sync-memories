@@ -9,7 +9,6 @@ import android.os.Environment
 import android.util.Log
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import permissions.dispatcher.NeedsPermission
 import permissions.dispatcher.RuntimePermissions
@@ -30,7 +29,7 @@ class MainActivity : AppCompatActivity() {
 
 
     fun chooseTargetDirectory() {
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 44);
+        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), 44)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,22 +41,4 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         PicturesSyncService.invoke(this)
     }
-
-    /*
-    public override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
-        if (resultCode != Activity.RESULT_OK)
-            return
-        val treeUri = resultData!!.data as Uri
-        Log.d(TAG, treeUri.toString())
-        val pickedDir = DocumentFile.fromTreeUri(this, treeUri)
-        grantUriPermission(
-            packageName,
-            treeUri,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        )
-        contentResolver.takePersistableUriPermission(
-            treeUri,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        )
-    }*/
 }

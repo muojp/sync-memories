@@ -49,16 +49,17 @@ class PicturesSyncService : JobIntentService() {
         }
     }
 
+    var notification: Notification? = null
     private fun prepareNotification() {
         createNotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME)
-        val notification = notificationBuilder.apply { setContentText("Text0") }.build()
+        notification = notificationBuilder.apply { setContentText("Text0") }.build()
         notificationManager.notify(NOTIFICATION_ID, notification)
         startForeground(NOTIFICATION_ID, notification)
     }
 
     private fun updateNotification(op: (NotificationCompat.Builder) -> Unit) {
-        val notification = notificationBuilder.apply(op).build()
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        // val notification = notificationBuilder.apply(op).build()
+        notification?.let { notificationManager.notify(NOTIFICATION_ID, it) }
     }
 
     private fun cleanup() {

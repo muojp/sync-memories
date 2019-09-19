@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
-<Preference
-    app:key="srcRoot"
-    app:title="Copy from">
-
-</Preference>
+    <EditTextPreference
+        app:key="srcRoot"
+        app:title="Copy photos from"
+        app:summary="Specify and grant permission to access src storage"/>
+    <EditTextPreference
+        app:key="destRoot"
+        app:title="Copy photos to(JPEG)"
+        app:summary="Specify and grant permission to access dest storage"/>
 </PreferenceScreen>
