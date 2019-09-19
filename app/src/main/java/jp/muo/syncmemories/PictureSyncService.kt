@@ -58,8 +58,10 @@ class PicturesSyncService : JobIntentService() {
     }
 
     private fun updateNotification(op: (NotificationCompat.Builder) -> Unit) {
-        // val notification = notificationBuilder.apply(op).build()
-        notification?.let { notificationManager.notify(NOTIFICATION_ID, it) }
+        val notification = notificationBuilder.apply(op).setOnlyAlertOnce(true).build()
+        notification?.let {
+            notificationManager.notify(NOTIFICATION_ID, it)
+        }
     }
 
     private fun cleanup() {
