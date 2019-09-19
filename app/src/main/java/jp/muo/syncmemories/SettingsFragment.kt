@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.EditTextPreference
@@ -49,26 +50,41 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
+    val editTextMap = mutableMapOf<Preference, EditText>()
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
-        val srcRoot : EditTextPreference = findPreference("srcRoot")!!
-        val destRoot : EditTextPreference = findPreference("destRoot")!!
-        srcRoot.setOnPreferenceClickListener({
-            acquireSrcDirectoryWithPermissionCheck()
-            true
-        })
-        srcRoot.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
-        destRoot.setOnPreferenceClickListener({
-            acquireDestDirectoryWithPermissionCheck()
-            true
-        })
-        destRoot.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
+        editTextMap.clear()
+        val srcRoot: EditTextPreference = findPreference("srcRoot")!!
+        val destRoot: EditTextPreference = findPreference("destRoot")!!
+        srcRoot.apply {
+            setOnPreferenceClickListener({
+                acquireSrcDirectoryWithPermissionCheck()
+                true
+            })
+            setOnBindEditTextListener {
+                editTextMap[srcRoot] = it
+            }
+            summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
+        }
+
+        destRoot.apply {
+            setOnPreferenceClickListener({
+                acquireDestDirectoryWithPermissionCheck()
+                true
+            })
+            setOnBindEditTextListener {
+                editTextMap[destRoot] = it
+            }
+            summaryProvider =
+                EditTextPreference.SimpleSummaryProvider.getInstance()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         if (resultCode != Activity.RESULT_OK)
             return
-        var pref : EditTextPreference? = null
+        var pref: EditTextPreference? = null
         when (requestCode) {
             REQ_SRC -> pref = findPreference("srcRoot")!!
             REQ_DEST -> pref = findPreference("destRoot")!!
@@ -86,11 +102,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
             Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         )
         pref?.apply {
-            text = treeUri.toString()
+            editTextMap[this]?.setText(treeUri.toString())
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         onRequestPermissionsResult(requestCode, grantResults)
     }
