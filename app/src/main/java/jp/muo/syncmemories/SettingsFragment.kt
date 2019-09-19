@@ -34,20 +34,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), REQ_DEST);
     }
 
-    fun checkGrantedDiskAccessRight() {
-        val str = "content://com.android.externalstorage.documents/tree/1EEE-3510%3A"
-        val fileRef = DocumentFile.fromTreeUri(context!!, Uri.parse(str))?.let {
-            Log.d(MainActivity.TAG, "SD access enabled")
-            if (it.isDirectory) {
-                val d = it.findFile("DCIM")?.let {
-                    if (it.exists()) {
-                        Log.d(MainActivity.TAG, "found DCIM")
-                    }
-                }
-            }
-        }
-    }
-
     val editTextMap = mutableMapOf<Preference, EditText>()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -56,10 +42,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val srcRoot: EditTextPreference = findPreference("srcRoot")!!
         val destRoot: EditTextPreference = findPreference("destRoot")!!
         srcRoot.apply {
-            setOnPreferenceClickListener({
+            setOnPreferenceClickListener {
                 acquireSrcDirectoryWithPermissionCheck()
                 true
-            })
+            }
             setOnBindEditTextListener {
                 editTextMap[srcRoot] = it
             }
@@ -67,10 +53,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
 
         destRoot.apply {
-            setOnPreferenceClickListener({
+            setOnPreferenceClickListener {
                 acquireDestDirectoryWithPermissionCheck()
                 true
-            })
+            }
             setOnBindEditTextListener {
                 editTextMap[destRoot] = it
             }
