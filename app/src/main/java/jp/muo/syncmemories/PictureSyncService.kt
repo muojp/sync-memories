@@ -27,6 +27,7 @@ class PicturesSyncService : JobIntentService() {
         private const val NOTIFICATION_CHANNEL_NAME = "Data Sync progress"
         private const val NOTIFICATION_ID = 1
         private val DESTINATIONS = mapOf("JPG" to "destJpegRoot", "ARW" to "destRawRoot")
+        private val MIME_MAP = mapOf("JPG" to "image/jpeg", "ARW" to "image/arw")
 
         fun invoke(context: Context) {
             val intent = Intent(context, PicturesSyncService::class.java)
@@ -57,9 +58,9 @@ class PicturesSyncService : JobIntentService() {
     }
 
     private var notification: Notification? = null
-    private fun prepareNotification() {
+    private fun prepareNotification(msg: String) {
         createNotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME)
-        notification = notificationBuilder.apply { setContentText("Text0") }.build()
+        notification = notificationBuilder.apply { setContentText(msg) }.build()
         notificationManager.notify(NOTIFICATION_ID, notification)
         startForeground(NOTIFICATION_ID, notification)
     }
@@ -109,7 +110,7 @@ class PicturesSyncService : JobIntentService() {
                 return
             }
             val destFileRef = DocumentFile.fromTreeUri(applicationContext, Uri.parse(destRoot))
-            if (destFileRef == null || !destFileRef.isDirectory()) {
+            if (destFileRef == null || !destFileRef.exists() || !destFileRef.isDirectory()) {
                 throw Exception("destination directory not available")
             }
             srcFileRef?.subdirectory("DCIM")?.let {
@@ -122,12 +123,15 @@ class PicturesSyncService : JobIntentService() {
                             .filter { o -> o.isFile() && o.name!!.endsWith(extension, true) }
                     val nbFiles = files.count()
                     if (nbFiles != 0) {
-                        val notifTitle = "Copying: ${it.name} (${nbFiles} files"
+                        val notifTitle = "Copying: ${it.name} (${nbFiles}) files"
                         updateNotification { it.setContentTitle(notifTitle) }
                     }
-                    files.forEachIndexed fileloop@{ idx, srcFile ->
+                    files/*.sortedBy { it.name }*/.forEachIndexed fileloop@{ idx, srcFile ->
                         Log.d(TAG, srcFile.uri.toString())
-                        updateNotification { it.setProgress(nbFiles, idx, false) }
+                        updateNotification {
+                            it.setProgress(nbFiles, idx, false)
+                            it.setContentText(srcFile.name)
+                        }
                         val destFile = destFileRef.findFile(srcFile.name!!)
                         if (destFile != null && destFile.exists()) {
                             // file already exists
@@ -140,11 +144,12 @@ class PicturesSyncService : JobIntentService() {
                             }
                         }
                         // Perform file copy
-                        val newFile = destFileRef.createFile("image/jpeg", srcFile.name!!)!!
-                        Log.d(TAG, "srcFilePath: ${srcFile.uri.path}")
-                        Log.d(TAG, "destFilePath: ${destFile!!.uri.path}")
+                        val newFile =
+                            destFileRef.createFile(MIME_MAP[extension]!!, srcFile.name!!)!!
+                        Log.d(TAG, "srcFilePath: ${srcFile.uri}")
+                        Log.d(TAG, "newFilePath: ${newFile.uri}")
                         val inStream = contentResolver.openInputStream(srcFile.uri)
-                        val outStream = contentResolver.openOutputStream(destFile!!.uri)
+                        val outStream = contentResolver.openOutputStream(newFile.uri)
                         if (inStream == null || outStream == null) {
                             showToast("Something went wrong. Failed to open input/output stream")
                             return
@@ -185,20 +190,13 @@ class PicturesSyncService : JobIntentService() {
     }
 
     override fun onHandleWork(intent: Intent) {
-        // testshot()
+        registerReceiverForDetaching()
+        prepareNotification("Searching for image files")
+        testshot()
         if (!isMediaConnected()) {
+            cleanup()
             return
         }
-        registerReceiverForDetaching()
-        prepareNotification()
-        Thread.sleep(2000)
-        updateNotification { o ->
-            run {
-                // o.setContentText(rootDirs!!.firstOrNull()!!.absolutePath)
-                o.setProgress(100, 3, false)
-            }
-        }
-        Thread.sleep(3000)
         cleanup()
     }
 

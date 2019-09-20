@@ -11,18 +11,18 @@
         android:name="jp.muo.syncmemories.SettingsFragment"
         android:layout_width="0dp"
         android:layout_height="400dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/fragment_controllers"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <fragment
-        android:id="@+id/fragment_controller"
-        android:name="jp.muo.syncmemories.SettingsFragment"
+        android:id="@+id/fragment_controllers"
+        android:name="jp.muo.syncmemories.ControllersFragment"
         android:layout_width="0dp"
         android:layout_height="400dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/fragment_settings" />
 </androidx.constraintlayout.widget.ConstraintLayout>

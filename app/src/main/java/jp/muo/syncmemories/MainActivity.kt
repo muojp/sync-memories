@@ -19,9 +19,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.fragment_holder, SettingsFragment())
+            .replace(R.id.fragment_settings, SettingsFragment())
+            .replace(R.id.fragment_controllers, ControllersFragment())
             .commit()
         setContentView(R.layout.activity_main)
-        PicturesSyncService.invoke(this)
+//        PicturesSyncService.invoke(this)
     }
 }
