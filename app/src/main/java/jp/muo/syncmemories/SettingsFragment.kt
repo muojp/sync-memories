@@ -19,60 +19,46 @@ import permissions.dispatcher.RuntimePermissions
 class SettingsFragment : PreferenceFragmentCompat() {
     companion object {
         val TAG = "SettingsFragment"
-        val REQ_SRC = 10001
-        val REQ_DEST = 10002
+        val ASSOC =
+            mapOf<String, Int>("srcRoot" to 10001, "destJpegRoot" to 10002, "destRawRoot" to 10003)
     }
 
     @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-    fun acquireSrcDirectory() {
-        Toast.makeText(context, "hey", Toast.LENGTH_SHORT).show()
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), REQ_SRC);
-    }
-
-    @NeedsPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-    fun acquireDestDirectory() {
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), REQ_DEST);
+    fun acquireDirectory(code: Int) {
+        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), code);
     }
 
     val editTextMap = mutableMapOf<Preference, EditText>()
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(R.xml.preferences, rootKey)
-        editTextMap.clear()
-        val srcRoot: EditTextPreference = findPreference("srcRoot")!!
-        val destRoot: EditTextPreference = findPreference("destRoot")!!
-        srcRoot.apply {
+    private fun setupEditTextPreference(key: String) {
+        findPreference<EditTextPreference>(key)?.apply {
             setOnPreferenceClickListener {
-                acquireSrcDirectoryWithPermissionCheck()
+                acquireDirectoryWithPermissionCheck(ASSOC[key]!!)
                 true
             }
             setOnBindEditTextListener {
-                editTextMap[srcRoot] = it
+                editTextMap[this] = it
             }
             summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
         }
+    }
 
-        destRoot.apply {
-            setOnPreferenceClickListener {
-                acquireDestDirectoryWithPermissionCheck()
-                true
-            }
-            setOnBindEditTextListener {
-                editTextMap[destRoot] = it
-            }
-            summaryProvider =
-                EditTextPreference.SimpleSummaryProvider.getInstance()
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.preferences, rootKey)
+        editTextMap.clear()
+        for (key in ASSOC.keys) {
+            setupEditTextPreference(key)
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         if (resultCode != Activity.RESULT_OK)
             return
-        var pref: EditTextPreference? = null
-        when (requestCode) {
-            REQ_SRC -> pref = findPreference("srcRoot")!!
-            REQ_DEST -> pref = findPreference("destRoot")!!
-        }
+        val q = ASSOC.filterValues { it == requestCode }
+        if (q.isEmpty())
+            return
+        val kv = q.toList()[0]
+        val pref: EditTextPreference = findPreference(kv.first)!!
         val treeUri = resultData!!.data as Uri
         Log.d(TAG, treeUri.toString())
         val pickedDir = DocumentFile.fromTreeUri(context!!, treeUri)
@@ -85,7 +71,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             treeUri,
             Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         )
-        pref?.apply {
+        pref.apply {
             editTextMap[this]?.setText(treeUri.toString())
         }
     }

@@ -15,6 +15,8 @@ import androidx.core.app.NotificationCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
 import java.io.File
+import java.nio.file.FileSystems
+import java.nio.file.Files
 
 class PicturesSyncService : JobIntentService() {
     companion object {
@@ -24,6 +26,7 @@ class PicturesSyncService : JobIntentService() {
         private const val NOTIFICATION_CHANNEL_ID = "progress"
         private const val NOTIFICATION_CHANNEL_NAME = "Data Sync progress"
         private const val NOTIFICATION_ID = 1
+        private val DESTINATIONS = mapOf("JPG" to "destJpegRoot", "ARW" to "destRawRoot")
 
         fun invoke(context: Context) {
             val intent = Intent(context, PicturesSyncService::class.java)
@@ -93,23 +96,67 @@ class PicturesSyncService : JobIntentService() {
         return null
     }
 
-    private fun acquireRootDirs() {
+    private fun testshot() {
         val srcRoot = prefs.getString("srcRoot", "")!!
         if (srcRoot == "") {
             return
         }
-        val fileRef = DocumentFile.fromTreeUri(applicationContext, Uri.parse(srcRoot))
-        fileRef?.subdirectory("DCIM")?.let {
-            // find DSC-series subdirectories
-            val dirs = it.listFiles().filter { o -> o.isDirectory() && o.name!!.endsWith("MSDCF") }
-            dirs.forEach {
-                it.listFiles().filter { o -> o.isFile() && o.name!!.endsWith("JPG", true) }
-                    .forEach { file ->
-                        Log.d(TAG, file.name)
-                    }
+        val srcFileRef = DocumentFile.fromTreeUri(applicationContext, Uri.parse(srcRoot))
+        DESTINATIONS.forEach { (extension, prefKey) ->
+            val destRoot = prefs.getString(prefKey, "")!!
+            if (destRoot == "") {
+                showToast("$extension destination not set. Skipped.")
+                return
             }
+            val destFileRef = DocumentFile.fromTreeUri(applicationContext, Uri.parse(destRoot))
+            if (destFileRef == null || !destFileRef.isDirectory()) {
+                throw Exception("destination directory not available")
+            }
+            srcFileRef?.subdirectory("DCIM")?.let {
+                // find DSC-series subdirectories
+                val dirs =
+                    it.listFiles().filter { o -> o.isDirectory() && o.name!!.endsWith("MSDCF") }
+                dirs.forEach dirloop@{
+                    val files =
+                        it.listFiles()
+                            .filter { o -> o.isFile() && o.name!!.endsWith(extension, true) }
+                    val nbFiles = files.count()
+                    if (nbFiles != 0) {
+                        val notifTitle = "Copying: ${it.name} (${nbFiles} files"
+                        updateNotification { it.setContentTitle(notifTitle) }
+                    }
+                    files.forEachIndexed fileloop@{ idx, srcFile ->
+                        Log.d(TAG, srcFile.uri.toString())
+                        updateNotification { it.setProgress(nbFiles, idx, false) }
+                        val destFile = destFileRef.findFile(srcFile.name!!)
+                        if (destFile != null && destFile.exists()) {
+                            // file already exists
+                            if (destFile.length() < srcFile.length()) {
+                                // Incomplete file found. Delete current one and copy again.
+                                destFile.delete()
+                            } else {
+                                // Complete file found. Do nothing.
+                                return@fileloop
+                            }
+                        }
+                        // Perform file copy
+                        val newFile = destFileRef.createFile("image/jpeg", srcFile.name!!)!!
+                        Log.d(TAG, "srcFilePath: ${srcFile.uri.path}")
+                        Log.d(TAG, "destFilePath: ${destFile!!.uri.path}")
+                        val inStream = contentResolver.openInputStream(srcFile.uri)
+                        val outStream = contentResolver.openOutputStream(destFile!!.uri)
+                        if (inStream == null || outStream == null) {
+                            showToast("Something went wrong. Failed to open input/output stream")
+                            return
+                        }
+                        inStream.copyTo(outStream)
+                        outStream.close()
+                        inStream.close()
+                    }
+                }
+            }
+            showToast(prefs.getString("destRoot", "")!!)
         }
-        showToast(prefs.getString("destRoot", "")!!)
     }
 
     private fun isMediaConnected(): Boolean {
@@ -138,7 +185,7 @@ class PicturesSyncService : JobIntentService() {
     }
 
     override fun onHandleWork(intent: Intent) {
-        acquireRootDirs()
+        // testshot()
         if (!isMediaConnected()) {
             return
         }
