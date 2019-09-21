@@ -13,6 +13,6 @@ class UsbStorageReceiver : BroadcastReceiver() {
             return
         }
         Toast.makeText(context, "USB Storage Connected: ", Toast.LENGTH_SHORT).show()
-        // PicturesSyncService.invoke(context)
+        PicturesSyncService.invoke(context)
     }
 }

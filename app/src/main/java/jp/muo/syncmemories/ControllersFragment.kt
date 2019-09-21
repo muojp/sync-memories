@@ -17,6 +17,7 @@ class ControllersFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        super.onCreateView(inflater, container, savedInstanceState)
         return inflater.inflate(R.layout.frag_controllers, container, false)
     }
 
