@@ -23,6 +23,5 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.fragment_controllers, ControllersFragment())
             .commit()
         setContentView(R.layout.activity_main)
-//        PicturesSyncService.invoke(this)
     }
 }

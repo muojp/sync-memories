@@ -195,11 +195,6 @@ class PicturesSyncService : JobIntentService() {
         }
     }
 
-    private fun isMediaConnected(): Boolean {
-        rootDirs?.forEach { Log.d(TAG, "Path: ${it.absolutePath}") }
-        return rootDirs?.count() != 0
-    }
-
     private var receiver: BroadcastReceiver? = null
 
     private fun registerReceiverForDetaching() {
@@ -224,10 +219,6 @@ class PicturesSyncService : JobIntentService() {
         registerReceiverForDetaching()
         prepareNotification("Searching for image files")
         testshot()
-        if (!isMediaConnected()) {
-            cleanup()
-            return
-        }
         cleanup()
     }
 
