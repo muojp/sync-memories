@@ -124,15 +124,15 @@ class PicturesSyncService : JobIntentService() {
                     val nbFiles = files.count()
                     val dirname = it.name
                     if (nbFiles != 0) {
-                        val notifTitle =
-                            updateNotification { it.setContentTitle("Copying: $dirname (${nbFiles}) files") }
+                        updateNotification { it.setContentTitle("Copying: $dirname (${nbFiles}) files") }
                     }
-                    files.apply { sortedBy { it.name } }.forEachIndexed fileloop@{ idx, srcFile ->
+                    val filesArray = files.apply { sortedBy { it.name } }.toTypedArray()
+                    filesArray.forEachIndexed fileloop@{ i, srcFile ->
                         Log.d(TAG, srcFile.uri.toString())
                         updateNotification {
-                            it.setProgress(nbFiles, idx, false)
+                            it.setProgress(nbFiles, i, false)
                             it.setContentText(srcFile.name)
-                            it.setContentTitle("Copying: $dirname ($idx/${nbFiles}) files")
+                            it.setContentTitle("Copying: $dirname ($i/${nbFiles}) files")
                         }
                         val destFile = destFileRef.findFile(srcFile.name!!)
                         if (destFile != null && destFile.exists()) {
