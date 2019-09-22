@@ -1,5 +1,6 @@
 package jp.muo.syncmemories
 
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -15,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
 import java.io.File
+
 
 class PicturesSyncService : JobIntentService() {
     companion object {
@@ -49,7 +51,6 @@ class PicturesSyncService : JobIntentService() {
             setDefaults(Notification.DEFAULT_ALL)
             setWhen(System.currentTimeMillis())
             setSmallIcon(R.drawable.ic_launcher_background)
-            setContentTitle("Title")
         }
     }
     private val prefs: SharedPreferences by lazy {
@@ -60,8 +61,11 @@ class PicturesSyncService : JobIntentService() {
 
     private var notification: Notification? = null
     private fun prepareNotification(msg: String) {
-        createNotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME)
-        notification = notificationBuilder.apply { setContentTitle(msg) }.build()
+        if (notification == null) {
+            createNotificationChannel(NOTIFICATION_CHANNEL_ID, NOTIFICATION_CHANNEL_NAME)
+            notification =
+                notificationBuilder.apply { setContentTitle(msg) }.setOnlyAlertOnce(true).build()
+        }
         notificationManager.notify(NOTIFICATION_ID, notification)
         startForeground(NOTIFICATION_ID, notification)
     }
@@ -83,6 +87,7 @@ class PicturesSyncService : JobIntentService() {
 
     private fun cleanupNotification() {
         notificationManager.cancel(NOTIFICATION_ID)
+        notification = null
     }
 
     private var rootDirs: MutableList<File>? = null
@@ -244,6 +249,13 @@ class PicturesSyncService : JobIntentService() {
 
     override fun onHandleWork(intent: Intent) {
         registerReceiverForDetaching()
+        val kgm = applicationContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (kgm.isDeviceLocked) {
+            prepareNotification("Unlock the device to mount USB storage")
+            while (kgm.isDeviceLocked) {
+                Thread.sleep(200)
+            }
+        }
         findDcimDirectoryOnAttachedStorage()?.let {
             prepareNotification("Searching for image files")
             testshot(it)

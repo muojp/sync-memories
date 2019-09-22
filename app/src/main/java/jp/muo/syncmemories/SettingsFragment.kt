@@ -5,9 +5,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.widget.EditText
-import androidx.documentfile.provider.DocumentFile
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -17,8 +15,7 @@ import permissions.dispatcher.RuntimePermissions
 @RuntimePermissions
 class SettingsFragment : PreferenceFragmentCompat() {
     companion object {
-        val TAG = "SettingsFragment"
-        val ASSOC =
+        val PREFKEYS_TO_REQUEST_CODES =
             mapOf<String, Int>("srcRoot" to 10001, "destJpegRoot" to 10002, "destRawRoot" to 10003)
     }
 
@@ -32,7 +29,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private fun setupEditTextPreference(key: String) {
         findPreference<EditTextPreference>(key)?.apply {
             setOnPreferenceClickListener {
-                acquireDirectoryWithPermissionCheck(ASSOC[key]!!)
+                acquireDirectoryWithPermissionCheck(PREFKEYS_TO_REQUEST_CODES[key]!!)
                 true
             }
             setOnBindEditTextListener {
@@ -45,7 +42,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
         editTextMap.clear()
-        for (key in ASSOC.keys) {
+        for (key in PREFKEYS_TO_REQUEST_CODES.keys) {
             setupEditTextPreference(key)
         }
     }
@@ -53,14 +50,12 @@ class SettingsFragment : PreferenceFragmentCompat() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
         if (resultCode != Activity.RESULT_OK)
             return
-        val q = ASSOC.filterValues { it == requestCode }
+        val q = PREFKEYS_TO_REQUEST_CODES.filterValues { it == requestCode }
         if (q.isEmpty())
             return
         val kv = q.toList()[0]
         val pref: EditTextPreference = findPreference(kv.first)!!
         val treeUri = resultData!!.data as Uri
-        Log.d(TAG, treeUri.toString())
-        val pickedDir = DocumentFile.fromTreeUri(context!!, treeUri)
         context!!.grantUriPermission(
             context!!.packageName,
             treeUri,
