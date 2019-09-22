@@ -5,4 +5,5 @@
     <string name="pref_title_srcRoot">Copy photos from (choose SD Card root)</string>
     <string name="pref_title_destJpegRoot">Copy photos to (JPEG)</string>
     <string name="pref_title_destRawRoot">Copy photos to (RAW)</string>
+    <string name="btn_label_reset_database">Reset Database</string>
 </resources>
