@@ -8,12 +8,14 @@
         android:id="@+id/btn_testshot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Testshot" />
+        android:layout_margin="12dp"
+        android:text="@string/btn_label_trigger_sync" />
 
     <Button
         android:id="@+id/btn_cleanup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Cleanup" />
+        android:layout_margin="12dp"
+        android:text="@string/btn_label_cleanup" />
 
 </LinearLayout>

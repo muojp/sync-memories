@@ -2,14 +2,11 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
     <EditTextPreference
         app:key="srcRoot"
-        app:summary="Specify and grant permission to access src storage"
-        app:title="Copy photos from" />
+        app:title="@string/pref_title_srcRoot" />
     <EditTextPreference
         app:key="destJpegRoot"
-        app:summary="Specify and grant permission to access dest storage"
-        app:title="Copy photos to (JPEG)" />
+        app:title="@string/pref_title_destJpegRoot" />
     <EditTextPreference
         app:key="destRawRoot"
-        app:summary="Specify and grant permission to access dest storage"
-        app:title="Copy photos to (RAW)" />
+        app:title="@string/pref_title_destRawRoot" />
 </PreferenceScreen>

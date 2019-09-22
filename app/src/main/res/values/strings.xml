@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">SyncMemories</string>
+    <string name="btn_label_cleanup">Cleanup</string>
+    <string name="btn_label_trigger_sync">Trigger Sync</string>
+    <string name="pref_title_srcRoot">Copy photos from (choose SD Card root)</string>
+    <string name="pref_title_destJpegRoot">Copy photos to (JPEG)</string>
+    <string name="pref_title_destRawRoot">Copy photos to (RAW)</string>
 </resources>
