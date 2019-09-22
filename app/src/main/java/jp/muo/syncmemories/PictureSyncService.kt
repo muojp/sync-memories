@@ -90,8 +90,6 @@ class PicturesSyncService : JobIntentService() {
         notification = null
     }
 
-    private var rootDirs: MutableList<File>? = null
-
     private fun DocumentFile.subdirectory(name: String): DocumentFile? {
         if (isDirectory) {
             val d = findFile(name)?.let {
