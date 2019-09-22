@@ -15,7 +15,6 @@ import androidx.core.app.JobIntentService
 import androidx.core.app.NotificationCompat
 import androidx.documentfile.provider.DocumentFile
 import androidx.preference.PreferenceManager
-import java.io.File
 
 
 class PicturesSyncService : JobIntentService() {
