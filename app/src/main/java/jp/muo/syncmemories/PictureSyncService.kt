@@ -24,10 +24,11 @@ class PicturesSyncService : JobIntentService() {
         private const val NOTIFICATION_CHANNEL_ID = "progress"
         private const val NOTIFICATION_CHANNEL_NAME = "Data Sync progress"
         private const val NOTIFICATION_ID = 1
+        private const val PREF_KEY_SOURCE = "srcRoot"
         private val DESTINATIONS = mapOf("JPG" to "destJpegRoot", "ARW" to "destRawRoot")
         private val MIME_MAP = mapOf("JPG" to "image/jpeg", "ARW" to "image/arw")
-        private const val CHECK_EVERY = 100L
-        private const val CHECK_ITER = 15
+        private const val STORAGE_AVAILABILITY_CHECK_EVERY = 100L
+        private const val STORAGE_AVAILABILITY_CHECK_ITER = 15
 
         fun invoke(context: Context) {
             val intent = Intent(context, PicturesSyncService::class.java)
@@ -86,7 +87,7 @@ class PicturesSyncService : JobIntentService() {
 
     private var rootDirs: MutableList<File>? = null
 
-    fun DocumentFile.subdirectory(name: String): DocumentFile? {
+    private fun DocumentFile.subdirectory(name: String): DocumentFile? {
         if (isDirectory) {
             val d = findFile(name)?.let {
                 if (it.exists()) {
@@ -97,102 +98,105 @@ class PicturesSyncService : JobIntentService() {
         return null
     }
 
-    private fun testshot() {
-        val srcRoot = prefs.getString("srcRoot", "")!!
-        if (srcRoot == "") {
-            return
+    data class FileInfoCache(val name: String, val size: Long, val doc: DocumentFile)
+    private class DestinationInfo(
+        val destFileDir: DocumentFile
+    ) {
+        val fileListCache: Map<String, FileInfoCache> by lazy {
+            destFileDir.listFiles()
+                .map { o -> o.name!! to FileInfoCache(o.name!!, o.length(), o) }.toMap()
         }
-        val srcFileRef = DocumentFile.fromTreeUri(applicationContext, Uri.parse(srcRoot))
-        if (srcFileRef == null) {
-            showToast("source media not attached.")
-            return
-        }
-        for (i in 0..CHECK_ITER) {
-            if (!srcFileRef.exists()) {
-                Thread.sleep(CHECK_EVERY)
-            }
-        }
-        if (!srcFileRef.exists()) {
-            // still not mounted.
-            showToast("source media not attached.")
-            return
-        }
-        DESTINATIONS.forEach { (extension, prefKey) ->
-            val destRoot = prefs.getString(prefKey, "")!!
+    }
+
+    private fun testshot(dcimRoot: DocumentFile) {
+        val destMap = mutableMapOf<String, DestinationInfo>()
+        DESTINATIONS.forEach { (extension, destPrefKey) ->
+            val destRoot = prefs.getString(destPrefKey, "")!!
             if (destRoot == "") {
                 showToast("$extension destination not set. Skipped.")
                 return
             }
             val destFileDir = DocumentFile.fromTreeUri(applicationContext, Uri.parse(destRoot))
-            if (destFileDir == null || !destFileDir.exists() || !destFileDir.isDirectory()) {
+            if (destFileDir == null || !destFileDir.exists() || !destFileDir.isDirectory) {
                 throw Exception("destination directory not available")
             }
-            data class FileInfoCache(val name: String, val size: Long, val doc: DocumentFile)
-
-            val destListCache =
-                destFileDir.listFiles()
-                    .map { o -> o.name!! to FileInfoCache(o.name!!, o.length(), o) }.toMap()
-            srcFileRef.subdirectory("DCIM")?.let {
-                // find DSC-series subdirectories
-                val dirs =
-                    it.listFiles().filter { o -> o.isDirectory() && o.name!!.endsWith("MSDCF") }
-                dirs.forEach dirloop@{
+            destMap[extension] = DestinationInfo(destFileDir)
+        }
+        // find DSC-series subdirectories
+        val dirs =
+            dcimRoot.listFiles().filter { o -> o.isDirectory() && o.name!!.endsWith("MSDCF") }
+        dirs.forEach dirloop@{
+            updateNotification {
+                it.setContentTitle("Building source file list")
+                it.setProgress(0, 0, true)
+            }
+            val files =
+                it.listFiles().map { o -> o.name!! to o }.toMap().toSortedMap()
+            DESTINATIONS.forEach extloop@{ (extension, _) ->
+                val targetedFiles = files.keys.filter {
+                    it.endsWith(extension, true)
+                }
+                val dirname = it.name
+                val nbFiles = targetedFiles.count()
+                val destInfo = destMap[extension] ?: return@extloop
+                updateNotification {
+                    it.setProgress(0, 0, true)
+                    it.setContentTitle("Scanning destination directory")
+                }
+                targetedFiles.forEachIndexed fileloop@{ i, key ->
+                    val srcFile = files[key]
+                    if (srcFile == null || !srcFile.isFile) {
+                        return@fileloop
+                    }
+                    val destFile = destInfo.fileListCache[srcFile.name!!]
+                    // val destFile = destFileDir.findFile(srcFile.name!!)
                     updateNotification {
-                        it.setContentTitle("Building source file list")
-                        it.setProgress(10, 0, true)
+                        val cnt = i + 1
+                        it.setProgress(nbFiles, cnt, false)
+                        it.setContentText(srcFile.name)
+                        it.setContentTitle("Copying: $dirname ($cnt/${nbFiles}) files")
                     }
-                    val files =
-                        it.listFiles().map { o -> o.name!! to o }.toMap().toSortedMap()
-                    val targettedFiles = files.keys.filter {
-                        it.endsWith(extension, true)
-                    }
-                    val dirname = it.name
-                    val nbFiles = targettedFiles.count()
-                    if (nbFiles != 0) {
-                        updateNotification { it.setContentTitle("Copying: $dirname (${targettedFiles.count()}) files") }
-                    }
-                    targettedFiles.forEachIndexed fileloop@{ i, key ->
-                        val srcFile = files[key]
-                        if (srcFile == null || !srcFile.isFile) {
+                    if (destFile != null && destFile.doc.exists()) {
+                        // file already exists
+                        if (destFile.doc.length() < srcFile.length()) {
+                            // Incomplete file found. Delete current one and copy again.
+                            destFile.doc.delete()
+                        } else {
+                            // Complete file found. Do nothing.
                             return@fileloop
                         }
-                        updateNotification {
-                            val cnt = i + 1
-                            it.setProgress(nbFiles, cnt, false)
-                            it.setContentText(srcFile.name)
-                            it.setContentTitle("Copying: $dirname ($cnt/${nbFiles}) files")
-                        }
-                        val destFile = destListCache[srcFile.name!!]
-                        // val destFile = destFileDir.findFile(srcFile.name!!)
-                        if (destFile != null && destFile.doc.exists()) {
-                            // file already exists
-                            if (destFile.doc.length() < srcFile.length()) {
-                                // Incomplete file found. Delete current one and copy again.
-                                destFile.doc.delete()
-                            } else {
-                                // Complete file found. Do nothing.
-                                return@fileloop
-                            }
-                        }
-                        // Perform file copy
-                        val newFile =
-                            destFileDir.createFile(MIME_MAP[extension]!!, srcFile.name!!)!!
-                        Log.d(TAG, "srcFilePath: ${srcFile.uri}")
-                        Log.d(TAG, "newFilePath: ${newFile.uri}")
-                        val inStream = contentResolver.openInputStream(srcFile.uri)
-                        val outStream = contentResolver.openOutputStream(newFile.uri)
-                        if (inStream == null || outStream == null) {
-                            showToast("Something went wrong. Failed to open input/output stream")
-                            return
-                        }
-                        inStream.copyTo(outStream)
-                        outStream.close()
-                        inStream.close()
                     }
+                    copyFile(srcFile, destInfo.destFileDir, extension)
                 }
             }
-            showToast(prefs.getString("destRoot", "")!!)
         }
+    }
+
+    private fun copyFile(
+        srcFile: DocumentFile, destFileDir: DocumentFile, extension: String
+    ): Boolean {
+        // Perform file copy
+        val mimeType = MIME_MAP.getOrDefault(extension, "")
+        if (mimeType.isEmpty()) {
+            // Unsupported file type
+            return false
+        }
+
+        destFileDir.createFile(mimeType, srcFile.name!!)?.let { destFile ->
+            Log.d(TAG, "srcFilePath: ${srcFile.uri}")
+            Log.d(TAG, "newFilePath: ${destFile.uri}")
+            val inStream = contentResolver.openInputStream(srcFile.uri)
+            val outStream = contentResolver.openOutputStream(destFile.uri)
+            if (inStream == null || outStream == null) {
+                showToast("Something went wrong. Failed to open input/output stream")
+                return false
+            }
+            inStream.copyTo(outStream)
+            outStream.close()
+            inStream.close()
+            return true
+        }
+        return false
     }
 
     private var receiver: BroadcastReceiver? = null
@@ -211,14 +215,39 @@ class PicturesSyncService : JobIntentService() {
         registerReceiver(receiver, IntentFilter(USB_DETACH_INTENT))
     }
 
+    private fun findDcimDirectoryOnAttachedStorage(): DocumentFile? {
+        val srcRoot = prefs.getString(PREF_KEY_SOURCE, "")
+        if (srcRoot == "") {
+            return null
+        }
+        val srcFileRef = DocumentFile.fromTreeUri(applicationContext, Uri.parse(srcRoot))
+        if (srcFileRef == null) {
+            showToast("source media not attached.")
+            return null
+        }
+        for (i in 0..STORAGE_AVAILABILITY_CHECK_ITER) {
+            if (!srcFileRef.exists()) {
+                Thread.sleep(STORAGE_AVAILABILITY_CHECK_EVERY)
+            }
+        }
+        if (!srcFileRef.exists()) {
+            // still not mounted.
+            showToast("source media not attached.")
+            return null
+        }
+        return srcFileRef.subdirectory("DCIM")
+    }
+
     private fun cancelSync() {
         throw Exception("Cancel not implemented")
     }
 
     override fun onHandleWork(intent: Intent) {
         registerReceiverForDetaching()
-        prepareNotification("Searching for image files")
-        testshot()
+        findDcimDirectoryOnAttachedStorage()?.let {
+            prepareNotification("Searching for image files")
+            testshot(it)
+        }
         cleanup()
     }
 

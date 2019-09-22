@@ -6,10 +6,12 @@ import android.content.Intent
 import android.widget.Toast
 
 class UsbStorageReceiver : BroadcastReceiver() {
-    val TARGET_USB_INTENT = "android.hardware.usb.action.USB_DEVICE_ATTACHED"
+    companion object {
+        private const val TARGET_USB_INTENT = "android.hardware.usb.action.USB_DEVICE_ATTACHED"
+    }
 
-    override fun onReceive(context: Context, p1: Intent) {
-        if (p1.action != TARGET_USB_INTENT) {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != TARGET_USB_INTENT) {
             return
         }
         Toast.makeText(context, "USB Storage Connected: ", Toast.LENGTH_SHORT).show()
