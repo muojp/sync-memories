@@ -6,4 +6,12 @@
     <string name="pref_title_destJpegRoot">Copy photos to (JPEG)</string>
     <string name="pref_title_destRawRoot">Copy photos to (RAW)</string>
     <string name="btn_label_reset_database">Reset Database</string>
+    <string name="error_opening_streams">Something went wrong. Failed to open input/output stream</string>
+    <string name="error_source_media_not_attached">source media not attached.</string>
+    <string name="dcim_dirname">DCIM</string>
+    <string name="alert_unlock_device">Unlock the device to mount USB storage</string>
+    <string name="searching_for_images">Searching for image files</string>
+    <string name="building_source_list">Building source file list</string>
+    <string name="scanning_dest_directory">Scanning destination directory</string>
+    <string name="copying_files">"Copying: %1$s (%2$d/%3$d) files"</string>
 </resources>

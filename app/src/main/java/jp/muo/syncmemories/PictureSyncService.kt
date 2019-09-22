@@ -110,7 +110,7 @@ class PicturesSyncService : JobIntentService() {
         }
     }
 
-    private fun testshot(dcimRoot: DocumentFile) {
+    private fun syncDcimDirectory(dcimRoot: DocumentFile) {
         val destMap = mutableMapOf<String, DestinationInfo>()
         DESTINATIONS.forEach { (extension, destPrefKey) ->
             val destRoot = prefs.getString(destPrefKey, "")!!
@@ -129,7 +129,7 @@ class PicturesSyncService : JobIntentService() {
             dcimRoot.listFiles().filter { o -> o.isDirectory() && o.name!!.endsWith("MSDCF") }
         dirs.forEach dirloop@{
             updateNotification {
-                it.setContentTitle("Building source file list")
+                it.setContentTitle(getString(R.string.building_source_list))
                 it.setProgress(0, 0, true)
             }
             val files =
@@ -143,7 +143,7 @@ class PicturesSyncService : JobIntentService() {
                 val destInfo = destMap[extension] ?: return@extloop
                 updateNotification {
                     it.setProgress(0, 0, true)
-                    it.setContentTitle("Scanning destination directory")
+                    it.setContentTitle(getString(R.string.scanning_dest_directory))
                 }
                 targetedFiles.forEachIndexed fileloop@{ i, key ->
                     val srcFile = files[key]
@@ -156,7 +156,14 @@ class PicturesSyncService : JobIntentService() {
                         val cnt = i + 1
                         it.setProgress(nbFiles, cnt, false)
                         it.setContentText(srcFile.name)
-                        it.setContentTitle("Copying: $dirname ($cnt/${nbFiles}) files")
+                        it.setContentTitle(
+                            getString(
+                                R.string.copying_files,
+                                dirname,
+                                cnt,
+                                nbFiles
+                            )
+                        )
                     }
                     if (destFile != null && destFile.doc.exists()) {
                         // file already exists
@@ -190,7 +197,7 @@ class PicturesSyncService : JobIntentService() {
             val inStream = contentResolver.openInputStream(srcFile.uri)
             val outStream = contentResolver.openOutputStream(destFile.uri)
             if (inStream == null || outStream == null) {
-                showToast("Something went wrong. Failed to open input/output stream")
+                showToast(getString(R.string.error_opening_streams))
                 return false
             }
             inStream.copyTo(outStream)
@@ -224,7 +231,7 @@ class PicturesSyncService : JobIntentService() {
         }
         val srcFileRef = DocumentFile.fromTreeUri(applicationContext, Uri.parse(srcRoot))
         if (srcFileRef == null) {
-            showToast("source media not attached.")
+            showToast(getString(R.string.error_source_media_not_attached))
             return null
         }
         for (i in 0..STORAGE_AVAILABILITY_CHECK_ITER) {
@@ -234,10 +241,10 @@ class PicturesSyncService : JobIntentService() {
         }
         if (!srcFileRef.exists()) {
             // still not mounted.
-            showToast("source media not attached.")
+            showToast(getString(R.string.error_source_media_not_attached))
             return null
         }
-        return srcFileRef.subdirectory("DCIM")
+        return srcFileRef.subdirectory(getString(R.string.dcim_dirname))
     }
 
     private fun cancelSync() {
@@ -248,14 +255,14 @@ class PicturesSyncService : JobIntentService() {
         registerReceiverForDetaching()
         val kgm = applicationContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         if (kgm.isDeviceLocked) {
-            prepareNotification("Unlock the device to mount USB storage")
+            prepareNotification(getString(R.string.alert_unlock_device))
             while (kgm.isDeviceLocked) {
                 Thread.sleep(200)
             }
         }
-        findDcimDirectoryOnAttachedStorage()?.let {
-            prepareNotification("Searching for image files")
-            testshot(it)
+        findDcimDirectoryOnAttachedStorage()?.let { dcimRoot ->
+            prepareNotification(getString(R.string.searching_for_images))
+            syncDcimDirectory(dcimRoot)
         }
         cleanup()
     }
