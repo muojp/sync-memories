@@ -224,7 +224,7 @@ class PicturesSyncService : JobIntentService() {
         registerReceiver(receiver, IntentFilter(USB_DETACH_INTENT))
     }
 
-    private fun findDcimDirectoryOnAttachedStorage(): DocumentFile? {
+    private fun findDcimDirectoryOnAttachedStorage(multipleAttempt: Boolean = true): DocumentFile? {
         val srcRoot = prefs.getString(PREF_KEY_SOURCE, "")
         if (srcRoot == "") {
             return null
@@ -234,9 +234,11 @@ class PicturesSyncService : JobIntentService() {
             showToast(getString(R.string.error_source_media_not_attached))
             return null
         }
-        for (i in 0..STORAGE_AVAILABILITY_CHECK_ITER) {
-            if (!srcFileRef.exists()) {
-                Thread.sleep(STORAGE_AVAILABILITY_CHECK_EVERY)
+        if (multipleAttempt) {
+            for (i in 0..STORAGE_AVAILABILITY_CHECK_ITER) {
+                if (!srcFileRef.exists()) {
+                    Thread.sleep(STORAGE_AVAILABILITY_CHECK_EVERY)
+                }
             }
         }
         if (!srcFileRef.exists()) {
@@ -253,18 +255,28 @@ class PicturesSyncService : JobIntentService() {
 
     override fun onHandleWork(intent: Intent) {
         registerReceiverForDetaching()
-        val kgm = applicationContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-        if (kgm.isDeviceLocked) {
-            prepareNotification(getString(R.string.alert_unlock_device))
-            while (kgm.isDeviceLocked) {
-                Thread.sleep(200)
-            }
-        }
-        findDcimDirectoryOnAttachedStorage()?.let { dcimRoot ->
+        waitForMediaDiscovery()?.let { dcimRoot ->
             prepareNotification(getString(R.string.searching_for_images))
             syncDcimDirectory(dcimRoot)
         }
         cleanup()
+    }
+
+    private fun waitForMediaDiscovery(): DocumentFile? {
+        var dir = findDcimDirectoryOnAttachedStorage(multipleAttempt = false)
+        val kgm =
+            applicationContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (kgm.isDeviceLocked) {
+            prepareNotification(getString(R.string.alert_unlock_device))
+            while (kgm.isDeviceLocked) {
+                Thread.sleep(200)
+                dir = findDcimDirectoryOnAttachedStorage(multipleAttempt = false)
+                if (dir != null) {
+                    break
+                }
+            }
+        }
+        return dir ?: findDcimDirectoryOnAttachedStorage()
     }
 
     private fun createNotificationChannel(channelId: String, channelName: String) {
