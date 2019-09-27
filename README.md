@@ -1,6 +1,6 @@
 # sync-memories: Transfer your camera photos to Android devices via USB rapidly
 
-Got tired of spending time transferring GBs of photo files from your cameras to your phones/tablets via Wi-Fi? Try sync-memories.
+Got tired of spending time transferring GBs of photo files from your cameras to your phones/tablets via Wi-Fi? Try sync-memories to leverage your device's USB capability.
 
 ## Features
 
@@ -25,6 +25,10 @@ Got tired of spending time transferring GBs of photo files from your cameras to 
 
 sync-memories is a free software, which means you can grab source code, inspect it, build it, and use it (of course, you can also modify and send merge-request) with very few restrictions. Still, there might be some situations when you find binary distribution is useful.
 
-Because the author of this software currently doesn't have much motivation to maintain the software on Google Play, there is no general Google Play link. Instead, sync-memories is distributed on F-Droid (planned) and Google Play beta program.
+Because the author of this software currently is not motivated to maintain the software on Google Play, there is no general Google Play link. Instead, sync-memories is distributed on F-Droid (planned) and Google Play beta program.
 
 TODO: links
+
+## Tested cameras
+
+ * DSC-RX100M5
