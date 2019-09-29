@@ -1,0 +1,10 @@
+Got tired of spending time transferring GBs of photo files from your cameras to your phones/tablets via Wi-Fi? Try sync-memories to leverage your device’s USB capability.
+
+ * Direct transfer via USB
+ * Normally, 3-4 times FASTER than Wi-Fi
+ * Doesn't block device (phone/tablet) Wi-Fi
+ * Skip synched files
+ * Avoid redundant copying based on file size so corrupt (incomplete) files are re-transfered on the next sync
+ * RAW image files (.ARW) supported
+ * RAW files can be stored into separate directory so you can easily handle your backup preferences
+ * e.g. send JPEG to Google Photos and send JPEG+RAW to Amazon Prime Photos
