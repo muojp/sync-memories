@@ -91,7 +91,7 @@ class PicturesSyncService : JobIntentService() {
 
     private fun DocumentFile.subdirectory(name: String): DocumentFile? {
         if (isDirectory) {
-            val d = findFile(name)?.let {
+            findFile(name)?.let {
                 if (it.exists()) {
                     return it
                 }
