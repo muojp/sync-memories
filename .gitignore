@@ -41,6 +41,7 @@ captures/
 .idea/dictionaries
 .idea/libraries
 .idea/caches
+.idea/modules.xml
 
 # Keystore files
 # Uncomment the following line if you do not want to check your keystore files in.
@@ -66,4 +67,3 @@ fastlane/readme.md
 
 .DS_Store
 
-app/
