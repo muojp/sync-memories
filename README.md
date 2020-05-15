@@ -28,7 +28,7 @@ sync-memories is a free software, which means you can grab source code, inspect 
 Because the author of this software currently is not motivated to maintain the software on Google Play, there is no general Google Play link. Instead, sync-memories is distributed on F-Droid (planned) and Google Play beta program.
 
  * [install from Google Play (beta access)](https://play.google.com/store/apps/details?id=jp.muo.syncmemories)
- * TODO: add F-Droid official repo link
+ * [install from F-Droid](https://f-droid.org/en/packages/jp.muo.syncmemories/)
 
 ## Tested cameras
 
